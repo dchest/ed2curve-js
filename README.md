@@ -2,8 +2,8 @@ ed2curve.js
 ===========
 
 Convert Ed25519 signing key pair into Curve25519 key pair suitable for
-Diffie-Hellman key exchange. This means that by exchanging with only 32-byte
-Ed25519 public key users can both sign and encrypt with NaCl.
+Diffie-Hellman key exchange. This means that by exchanging only 32-byte
+Ed25519 public keys users can both sign and encrypt with NaCl.
 
 Note that there's currently [no proof](http://crypto.stackexchange.com/a/3311/291)
 that this is safe to do. It is safer to share both Ed25519 and Curve25519
