@@ -11,7 +11,8 @@ public keys (their concatenation is 64 bytes long).
 
 Written by Dmitry Chestnykh in 2014. Public domain. No warranty.
 
-Thanks to @CodesInChaos and @nightcracker for showing how to
+Thanks to [@CodesInChaos](https://github.com/CodesInChaos) and
+[@nightcracker](https://github.com/nightcracker) for showing how to
 convert Edwards coordinates to Montgomery coordinates.
 
 [![Build Status](https://travis-ci.org/dchest/ed2curve-js.svg?branch=master)
