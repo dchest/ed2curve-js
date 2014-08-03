@@ -1,6 +1,6 @@
 {
   "name": "ed2curve",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "authors": [
     "Dmitry Chestnykh <dmitry@codingrobots.com>"
   ],
@@ -21,6 +21,9 @@
     "montgomery",
     "elliptic"
   ],
+  "dependencies": {
+    "tweetnacl": "^0.11.0"
+  },
   "license": "Public domain",
   "homepage": "https://github.com/dchest/ed2curve-js",
   "ignore": [
