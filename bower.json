@@ -1,0 +1,32 @@
+{
+  "name": "ed2curve",
+  "version": "0.1.0",
+  "authors": [
+    "Dmitry Chestnykh <dmitry@codingrobots.com>"
+  ],
+  "description": "Convert Ed25519 signing keys into Curve25519 Diffie-Hellman keys",
+  "main": "ed2curve.js",
+  "moduleType": [
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "ed25519",
+    "curve25519",
+    "djb",
+    "crypto",
+    "public",
+    "keys",
+    "edwards",
+    "montgomery",
+    "elliptic"
+  ],
+  "license": "Public domain",
+  "homepage": "https://github.com/dchest/ed2curve-js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test"
+  ]
+}
