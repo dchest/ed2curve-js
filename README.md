@@ -114,3 +114,18 @@ Requirements
 
 * Requires [TweetNaCl.js](https://github.com/dchest/tweetnacl-js)
 * Works in the same enviroments as it.
+
+
+Other libraries
+---------------
+
+Some other libraries that can use a single Ed/Curve25519 key:
+
+* [agl/../extra25519](https://github.com/agl/ed25519/blob/master/extra25519/extra25519.go) - Go
+  (compatible with ed2curve)
+* [CodesInChaos/../MontgomeryCurve25519](https://github.com/CodesInChaos/Chaos.NaCl/blob/master/Chaos.NaCl/MontgomeryCurve25519.cs) - C#
+  (compatible with ed2curve)
+* [nightcracker/ed25519](https://github.com/nightcracker/ed25519/blob/master/src/key_exchange.c) - C
+  (compatible with ed2curve)
+* [trevp/../curve_sigs](https://github.com/trevp/ref10_extract/blob/master/ed25519/additions/curve_sigs.c) - C
+  (incompatible, as it converts the opposite way, and stores a sign bit of signing public key in a signature)
