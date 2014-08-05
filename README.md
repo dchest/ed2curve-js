@@ -127,5 +127,7 @@ Some other libraries that can use a single Ed/Curve25519 key:
   (compatible with ed2curve)
 * [nightcracker/ed25519](https://github.com/nightcracker/ed25519/blob/master/src/key_exchange.c) - C
   (compatible with ed2curve)
+* [libsodium](https://github.com/jedisct1/libsodium) - C
+  (compatible with ed2curve)
 * [trevp/../curve_sigs](https://github.com/trevp/ref10_extract/blob/master/ed25519/additions/curve_sigs.c) - C
   (incompatible, as it converts the opposite way, and stores a sign bit of signing public key in a signature)
