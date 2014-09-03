@@ -1,6 +1,6 @@
 {
   "name": "ed2curve",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Convert Ed25519 signing keys into Curve25519 Diffie-Hellman keys.",
   "main": "ed2curve.js",
   "directories": {
@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/dchest/ed2curve-js",
   "dependencies": {
-    "tweetnacl": "0.11.x"
+    "tweetnacl": "0.x.x"
   },
   "devDependencies": {
     "faucet": "0.x.x",
