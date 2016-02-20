@@ -32,12 +32,12 @@
   },
   "homepage": "https://github.com/dchest/ed2curve-js",
   "dependencies": {
-    "tweetnacl": "0.x.x"
+    "tweetnacl": "^0.14.0"
   },
   "devDependencies": {
     "faucet": "0.x.x",
     "tape": "2.x.x",
     "tweetnacl-util": "^0.13.3",
-    "uglify-js": "2.x.x"
+    "uglify-js": "^2.6.1"
   }
 }
