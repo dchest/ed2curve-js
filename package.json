@@ -37,6 +37,7 @@
   "devDependencies": {
     "faucet": "0.x.x",
     "tape": "2.x.x",
+    "tweetnacl-util": "^0.13.3",
     "uglify-js": "2.x.x"
   }
 }

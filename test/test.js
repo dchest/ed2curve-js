@@ -1,5 +1,6 @@
 var test = require('tape');
 var nacl = require('tweetnacl');
+nacl.util = require('tweetnacl-util');
 var ed2curve = require('../ed2curve');
 
 test('ed2curve.convertKeyPair (seed)', function(t) {
