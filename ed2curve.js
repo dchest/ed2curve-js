@@ -26,8 +26,6 @@
       D = gf([0x78a3, 0x1359, 0x4dca, 0x75eb, 0xd8ab, 0x4141, 0x0a4d, 0x0070, 0xe898, 0x7779, 0x4079, 0x8cc7, 0xfe73, 0x2b6f, 0x6cee, 0x5203]),
       I = gf([0xa0b0, 0x4a0e, 0x1b27, 0xc4ee, 0xe478, 0xad2f, 0x1806, 0x2f43, 0xd7a7, 0x3dfb, 0x0099, 0x2b4d, 0xdf0b, 0x4fc1, 0x2480, 0x2b83]);
 
-
-
   function car25519(o) {
     var c;
     var i;
@@ -124,21 +122,17 @@
     }
   }
 
-
   function par25519(a) {
     var d = new Uint8Array(32);
     pack25519(d, a);
     return d[0] & 1;
   }
 
-
-
   function vn(x, xi, y, yi, n) {
     var i, d = 0;
     for (i = 0; i < n; i++) d |= x[xi + i] ^ y[yi + i];
     return (1 & ((d - 1) >>> 8)) - 1;
   }
-
 
   function crypto_verify_32(x, xi, y, yi) {
     return vn(x, xi, y, yi, 32);
@@ -150,7 +144,6 @@
     pack25519(d, b);
     return crypto_verify_32(c, 0, d, 0);
   }
-
 
   function pow2523(o, i) {
     var c = gf();
