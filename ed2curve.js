@@ -7,7 +7,7 @@
 /* jshint newcap: false */
 (function(root, f) {
   'use strict';
-  if (typeof module !== 'undefined' && module.exports) module.exports = f(require('tweetnacl/nacl-fast'));
+  if (typeof module !== 'undefined' && module.exports) module.exports = f(require('tweetnacl'));
   else root.ed2curve = f(root.nacl);
 }(this, function(nacl) {
   'use strict';
