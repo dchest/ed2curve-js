@@ -64,3 +64,16 @@ test('ed2curve.convertPublicKey (invalid key)', function(t) {
   t.equal(pk, null);
   t.end();
 });
+
+
+test('ed2curve.convertKeyPair (invalid key)', function(t) {
+  var invalidKey = new Uint8Array(32);
+  for (var i = 0; i < 31; i++) invalidKey[i] = 0xff;
+  var keyPair = {
+    publicKey: invalidKey,
+    privateKey: new Uint8Array(32) // doesn't matter
+  }
+  var convertedKeyPair = ed2curve.convertKeyPair(keyPair);
+  t.equal(convertedKeyPair, null);
+  t.end();
+});
