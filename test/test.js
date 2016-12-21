@@ -56,3 +56,11 @@ test('ed2curve.convertSecretKey and ed2curve.convertPublicKey (random)', functio
   t.equal(nacl.util.encodeBase64(s2), nacl.util.encodeBase64(s1));
   t.end();
 });
+
+test('ed2curve.convertPublicKey (invalid key)', function(t) {
+  var invalidKey = new Uint8Array(32);
+  for (var i = 0; i < 31; i++) invalidKey[i] = 0xff;
+  var pk = ed2curve.convertPublicKey(invalidKey);
+  t.equal(pk, null);
+  t.end();
+});
