@@ -9,7 +9,9 @@ Note that there's currently [no proof](http://crypto.stackexchange.com/a/3311/29
 that this is safe to do. It is safer to share both Ed25519 and Curve25519
 public keys (their concatenation is 64 bytes long).
 
-Written by Dmitry Chestnykh in 2014. Public domain. No warranty.
+Written by Dmitry Chestnykh in 2014-2016, using public domain code from
+[TweetNaCl.js](https://github.com/dchest/tweetnacl-js). Public domain.
+No warranty.
 
 Thanks to [@CodesInChaos](https://github.com/CodesInChaos) and
 [@nightcracker](https://github.com/nightcracker) for showing how to
