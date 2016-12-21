@@ -241,8 +241,10 @@
   }
 
   function convertKeyPair(edKeyPair) {
+    var publicKey = convertPublicKey(edKeyPair.publicKey);
+    if (!publicKey) return null;
     return {
-      publicKey: convertPublicKey(edKeyPair.publicKey),
+      publicKey: publicKey,
       secretKey: convertSecretKey(edKeyPair.secretKey)
     };
   }
