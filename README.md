@@ -71,6 +71,9 @@ which is the secret value) into a 32-byte Curve25519 secret key and returns it.
 Example
 -------
 
+(Note: example uses [tweetnacl-util](https://github.com/dchest/tweetnacl-util-js)
+to convert bytes)
+
 ```javascript
 // Generate new sign key pair.
 var myKeyPair = nacl.sign.keyPair();
