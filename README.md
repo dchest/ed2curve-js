@@ -110,13 +110,13 @@ var theirDHPublicKey = ed2curve.convertPublicKey(theirPublicKey);
 var myDHSecretKey = ed2curve.convertSecretKey(myKeyPair.secretKey);
 
 var anotherMessage = nacl.util.decodeUTF8('Keep silence');
-var encryptedMessage = nacl.box(anotherMessage, theirDHPublicKey, myDHSecretKey);
+var encryptedMessage = nacl.box(anotherMessage, nonce, theirDHPublicKey, myDHSecretKey);
 
 // When we receive encrypted messages from peers,
 // we need to use converted keys to open them.
 
 var theirEncryptedMessage = // ... receive
-var decryptedMessage = nacl.box.open(theirEncryptedMessage, theirDHPublicKey, myDHSecretKey);
+var decryptedMessage = nacl.box.open(theirEncryptedMessage, nonce, theirDHPublicKey, myDHSecretKey);
 ```
 
 Requirements
