@@ -1,6 +1,6 @@
 {
   "name": "ed2curve",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Convert Ed25519 signing keys into Curve25519 Diffie-Hellman keys.",
   "main": "ed2curve.js",
   "directories": {
