@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/dchest/ed2curve-js",
   "dependencies": {
-    "tweetnacl": "0.x.x"
+    "tweetnacl": "1.x.x"
   },
   "devDependencies": {
     "faucet": "0.x.x",
