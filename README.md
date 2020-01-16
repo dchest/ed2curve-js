@@ -28,11 +28,6 @@ Via NPM:
 
     $ npm install ed2curve
 
-Via Bower:
-
-    $ bower install ed2curve
-
-
 or just download `ed2curve.js` or `ed2curve.min.js` and include it after
 [TweetNaCl.js](https://github.com/dchest/tweetnacl-js):
 
