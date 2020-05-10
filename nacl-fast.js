@@ -1914,17 +1914,23 @@ function scalarbase(p, s) {
   scalarmult(p, q, s);
 }
 
-function crypto_sign_keypair(pk, sk, seeded) {
+function crypto_sign_keypair(pk, sk, seeded, no_hash) {
   var d = new Uint8Array(64);
   var p = [gf(), gf(), gf(), gf()];
   var i;
 
   if (!seeded) randombytes(sk, 32);
-  crypto_hash(d, sk, 32);
-  d[0] &= 248;
-  d[31] &= 127;
-  d[31] |= 64;
-
+  
+  if(no_hash){
+	d = sk.slice(0, 32);
+  }
+  else{
+	crypto_hash(d, sk, 32);
+	d[0] &= 248;
+	d[31] &= 127;
+	d[31] |= 64;
+  }
+  
   scalarbase(p, d);
   pack(pk, p);
 
@@ -2283,12 +2289,12 @@ nacl.box.sharedKeyLength = crypto_box_BEFORENMBYTES;
 nacl.box.nonceLength = crypto_box_NONCEBYTES;
 nacl.box.overheadLength = nacl.secretbox.overheadLength;
 
-nacl.sign = function(msg, secretKey) {
+nacl.sign = function(msg, secretKey, direct) {
   checkArrayTypes(msg, secretKey);
   if (secretKey.length !== crypto_sign_SECRETKEYBYTES)
     throw new Error('bad secret key size');
   var signedMsg = new Uint8Array(crypto_sign_BYTES+msg.length);
-  crypto_sign(signedMsg, msg, msg.length, secretKey);
+  crypto_sign(signedMsg, msg, msg.length, secretKey, direct);
   return signedMsg;
 };
 
@@ -2304,8 +2310,8 @@ nacl.sign.open = function(signedMsg, publicKey) {
   return m;
 };
 
-nacl.sign.detached = function(msg, secretKey) {
-  var signedMsg = nacl.sign(msg, secretKey);
+nacl.sign.detached = function(msg, secretKey, direct) {
+  var signedMsg = nacl.sign(msg, secretKey, direct);
   var sig = new Uint8Array(crypto_sign_BYTES);
   for (var i = 0; i < sig.length; i++) sig[i] = signedMsg[i];
   return sig;
@@ -2351,6 +2357,18 @@ nacl.sign.keyPair.fromSeed = function(seed) {
   crypto_sign_keypair(pk, sk, true);
   return {publicKey: pk, secretKey: sk};
 };
+
+nacl.sign.keyPair.fromBoxPriv32 = function(priv) {	//without hashing 32-bytes priv
+  checkArrayTypes(priv);
+  if (priv.length !== crypto_sign_SEEDBYTES)
+    throw new Error('bad priv size');
+  var pk = new Uint8Array(crypto_sign_PUBLICKEYBYTES);
+  var sk = new Uint8Array(crypto_sign_SECRETKEYBYTES);
+  for (var i = 0; i < 32; i++) sk[i] = priv[i];
+  crypto_sign_keypair(pk, sk, true, true);	//seeded, and no hash
+  return {publicKey: pk, secretKey: sk};	//sign publicKey (32 bytes), and secretKey (64 bytes), where first 32 bytes - priv32, second32 bytes - publicKey.
+};
+
 
 nacl.sign.publicKeyLength = crypto_sign_PUBLICKEYBYTES;
 nacl.sign.secretKeyLength = crypto_sign_SECRETKEYBYTES;
@@ -2409,8 +2427,25 @@ nacl.setPRNG = function(fn) {
 
 
 
+  // Converts Ed25519 secret key to Curve25519 secret key.
+nacl.convertSecretKeyBack =  function(sk) {
+  // Convert Curve25519 secret key into Ed25519 secret key (includes pub key).
+	var edsk = new Uint8Array(64);													//create new Uint8Array with length 64 bytes
+	var p = [gf(), gf(), gf(), gf()];												//initialize p, by calling gf() 4 times.
 
+	for (var i = 0; i < 32; i++) edsk[i] = sk[i];									//write secret key in edsk-array
+	// Ensure private key is in the correct format.									//working with secret-key
+	edsk[0] &= 248;
+	edsk[31] &= 127;
+	edsk[31] |= 64;
 
+	scalarbase(p, edsk);
+	pack(edsk.subarray(32), p);
+
+	// Remember sign bit.
+	var signBit = edsk[63] & 128;
+	return edsk;
+  };
 
 /*
 console.log('To understand the following changes:')
