@@ -1,0 +1,270 @@
+See console.log(F12 button).
+<script src="nacl-fast.js"></script>
+<script src="ed2curve.js"></script>
+
+<script>
+/*
+Задача: 		Сконвертировать sign-keyPair в box-keyPair и назад.
+
+проблема:		При генерации sign-keyPair - произодится sha512-хэширование seed'a, и восстановить его назад из sign-secretKey - нельзя.
+				В первой части 64-байтного sign-secretKey, первые 32-байта - хэш.
+
+Решение:		Опционально отключить хэширование, для генерации 64-байтного sign-secretKey,
+				первые 32 байта которого - seed (32-байтный box-secretKey) и ещё 32-байта - sign-publicKey.
+				Из этого 64-байтного ключа, можно получить box-ключи, а также пописывать и проверять собщения, если опционально отключить хэширование и там.
+
+Результат:		sign-keyPair конвертируется в box-keyPair, но не наоборот.
+				box-keyPair пребразуется в полу-валидную sign-keyPair, c sign-publicKey,
+				и где, в secretKey, первые 32 байта - box-secretKey, и ещё 32 байта sign-publicKey.
+				Этой полувалидной sign-keyPair можно подписывать сообщения, без хэширования (пхая 32-байтный secretKey - directly), и проверять подпись,
+				и из неё можно получить box-keyPair, используя
+				ed2curve.convertKeyPair(half_sign_keyPair, true), ed2curve.convertSecretKey(half_sign_keyPair.secretKey, true),
+				либо просто сконвертировав publicKey: ed2curve.convertPublicKey(half_sign_keyPair.secretKey);
+*/
+
+//Тесты:
+//1. 						Попробую сгенерировать пару sign-ключей и получить из неё - пару box-ключей, при помощи ed2curve.js:
+
+var NewSignKeyPair = nacl.sign.keyPair();										//random
+//or specified 64-bytes public key.
+//var NewSignKeyPair = nacl.sign.keyPair.fromSecretKey(new Uint8Array([245, 123, 182, 219, 144, 191, 53, 151, 166, 86, 255, 120, 204, 222, 40, 127, 253, 148, 178, 183, 141, 63, 222, 213, 167, 227, 127, 44, 142, 211, 1, 0, 181, 90, 68, 129, 62, 71, 38, 255, 167, 62, 197, 195, 199, 83, 83, 209, 168, 145, 20, 90, 119, 31, 187, 222, 224, 60, 44, 45, 228, 156, 176, 103]));
+
+console.log(
+	'\n\n'+'1. Generate random sign-keyPair:',
+			'\n'+	'NewSignKeyPair', NewSignKeyPair,
+			'\n'+ 	'NewSignKeyPair.publicKey', NewSignKeyPair.publicKey,
+			'\n'+ 	'NewSignKeyPair.secretKey', NewSignKeyPair.secretKey,
+			'\n',	'64-bytes secretKey, 32-bytes publicKey'
+);
+
+//2. get box-keys from sign keyPair:
+var ed2curveKeyPair = ed2curve.convertKeyPair(NewSignKeyPair);				//convert sign-keyPair ed25519 -> to box-keyPair curve25519
+
+console.log(
+	'\n\n'+'2.'	+	'Get box-keyPair from sign-keyPair, using ed2curve.js: ed2curve.convertKeyPair(), ed2curve.convertPublicKey(), ed2curve.convertPublicKey()',
+			'\n'+	'box ed2curveKeyPair', ed2curveKeyPair,
+			
+			'\n\n'+	'ed2curveKeyPair.publicKey', ed2curveKeyPair.publicKey,
+			'\n', 	'(ed2curveKeyPair.publicKey.toString() === ed2curve.convertPublicKey(NewSignKeyPair.publicKey).toString())',
+					(ed2curveKeyPair.publicKey.toString() === ed2curve.convertPublicKey(NewSignKeyPair.publicKey).toString()),	//true
+			
+			'\n\n'+	'ed2curveKeyPair.secretKey', ed2curveKeyPair.secretKey,
+			'\n',	'(ed2curveKeyPair.secretKey.toString() === ed2curve.convertSecretKey(NewSignKeyPair.secretKey).toString())',
+					(ed2curveKeyPair.secretKey.toString() === ed2curve.convertSecretKey(NewSignKeyPair.secretKey).toString()),	//true
+			'\n',	'Different box-keyPair, another keys.'
+);
+//совершенно два разных 32-байтных ключа на выходе. Ну, это было ожидаемо...
+
+//3.						Попробую восстановить sign-publicKey из box-publicKey, а также sign-secretKey из box-secretKey:
+var curvePublic = ed2curve.TryToConvertPublicKeyBack(ed2curveKeyPair.publicKey);					//from box-public (curve25519) to sign-public (ed25519).
+console.log(
+	'\n\n'+'3.'		+	'Try get sign pub: ed2curve.TryToConvertPublicKeyBack(ed2curvePublic):', curvePublic,
+			'\n'	+	'(NewSignKeyPair.publicKey.toString() === curvePublic.toString())',
+						(NewSignKeyPair.publicKey.toString() === curvePublic.toString()),			//sometimes not equals, because sign-bit...
+			'\n'	+	'sometimes true, sometimes false, because last byte not corresponding. Maybe there is parity-bit lost.'
+);
+
+var curveSecret = nacl.convertSecretKeyBack(ed2curveKeyPair.secretKey);								//from box-secret (curve25519) to sign-secret (ed25519).
+console.log(
+						'try get sign priv: nacl.convertSecretKeyBack(ed2curveSecret):', curveSecret,
+			'\n'	+	'(NewSignKeyPair.secretKey.toString() === curveSecret.toString())',
+						(NewSignKeyPair.secretKey.toString() === curveSecret.toString()),			//false.
+			'\n'	+	'this is false...'
+);
+console.log(
+		'Compare, and show differences:'+
+			'\n'	+	'(NewSignKeyPair.secretKey.toString() === curveSecret.secretKey.toString())',
+						(NewSignKeyPair.secretKey.toString() === curveSecret.toString())			 				//false
+
+		,	'\n'	+	'(NewSignKeyPair.secretKey.slice(32).toString() === curveSecret.secretKey.slice(32).toString())',
+						(NewSignKeyPair.secretKey.slice(32).toString() === curveSecret.slice(32).toString())		//true (the same publicKey)
+		, 				'(the same publicKey)'
+
+		,	'\n'	+	'(NewSignKeyPair.secretKey.slice(0, 32).toString() === curveSecret.secretKey.slice(0, 32).toString())',
+						(NewSignKeyPair.secretKey.slice(0, 32).toString() === curveSecret.slice(0, 32).toString())	//false (another, not-hashed secretKey)
+		, 				'(another, not-hashed secretKey)'
+);
+
+
+//4.						Попробую из box-приватника - получить sign-publicKey:
+
+var signKeyPairFromBoxSecretKey = nacl.sign.keyPair.fromBoxPriv32(ed2curveKeyPair.secretKey); //hashing disabled.
+console.log(
+	'\n\n'+'4. Try to get sign-keyPair back from box-secretKey, by using nacl.sign.keyPair.fromBoxPriv32(secretKey)',
+			'\n'+	'signKeyPairFromBoxSecretKey', signKeyPairFromBoxSecretKey,
+			'\n'+	'signKeyPairFromBoxSecretKey.publicKey', signKeyPairFromBoxSecretKey.publicKey,
+			'\n',	'(NewSignKeyPair.publicKey.toString() === signKeyPairFromBoxSecretKey.publicKey.toString())',
+					(NewSignKeyPair.publicKey.toString() === signKeyPairFromBoxSecretKey.publicKey.toString()), //true
+
+			'\n\n'+	'signKeyPairFromBoxSecretKey.secretKey', signKeyPairFromBoxSecretKey.secretKey,
+					'(NewSignKeyPair.secretKey.toString() === signKeyPairFromBoxSecretKey.secretKey.toString())',
+					(NewSignKeyPair.secretKey.toString() === signKeyPairFromBoxSecretKey.secretKey.toString()), //false
+			'\n',	'Another 64-bytes secretKey, because 32-bytes box-secretKey was been not hashed, '
+				+	'and writted directly in the first part of this (first 32-bytes).'
+);
+
+//5.						sign-publicKey из box-приватника, это хорошо и прекрасно, но надо бы получить и sign-secretKey из этого же приватника...
+//А он уже есть, 64-байтный secretKey:
+console.log(	'\n\n'+'5. Compare and show differences: '+	'\n'+ 'signKeyPairFromBoxSecretKey.secretKey', signKeyPairFromBoxSecretKey.secretKey);
+//но он - немножко другой:
+console.log(
+	'(NewSignKeyPair.secretKey.toString() === signKeyPairFromBoxSecretKey.secretKey.toString())',
+	(NewSignKeyPair.secretKey.toString() === signKeyPairFromBoxSecretKey.secretKey.toString())			 					//false
+);
+console.log(
+	'(NewSignKeyPair.secretKey.slice(32).toString() === signKeyPairFromBoxSecretKey.secretKey.slice(32).toString())',
+	(NewSignKeyPair.secretKey.slice(32).toString() === signKeyPairFromBoxSecretKey.secretKey.slice(32).toString())			//true (the same publicKey)
+	, '(the same publicKey)'
+);
+console.log(
+	'(NewSignKeyPair.secretKey.slice(0, 32).toString() === signKeyPairFromBoxSecretKey.secretKey.slice(0, 32).toString())',
+	(NewSignKeyPair.secretKey.slice(0, 32).toString() === signKeyPairFromBoxSecretKey.secretKey.slice(0, 32).toString())	//false (another, not-hashed secretKey)
+	, '(another, not-hashed secretKey)'
+);
+
+//6.						try to get keypair from previous long 64 secret-key, with non-hashed box-secretKey inside
+var signKeypairFromBox64Key = nacl.sign.keyPair.fromSecretKey(signKeyPairFromBoxSecretKey.secretKey);
+console.log(
+	'\n\n'+'6. Compare sign-keyPair generated from 64-bytes secretKey, with previous sign-keyPair:',
+				'\n'+	'(JSON.stringify(signKeyPairFromBoxSecretKey) === JSON.stringify(signKeypairFromBox64Key))',
+						(JSON.stringify(signKeyPairFromBoxSecretKey) === JSON.stringify(signKeypairFromBox64Key)),
+				'\n',	'The same sign-keyPair'
+);
+
+//7.	try to sign with direct secretKey of previous box-sign-KeyPair, without hashing secretKey, and verify the message with publicKey of this box-sign-keyPair.
+console.log(
+	'\n\n'+'7. '+ 'Try to sign the message direcly with previous keyPair (without hashing secretKey of this) and verify this signature:',
+	nacl.sign.detached.verify(
+		new TextEncoder().encode('message'),
+		nacl.sign.detached(
+			new TextEncoder().encode('message'),
+			signKeypairFromBox64Key.secretKey,
+			true
+		),
+		signKeypairFromBox64Key.publicKey
+	)
+);
+
+//8. Try to get box-keyPair from this half-sign-keyPair
+console.log(
+	'\n\n'	+	'8. Try to get box-keyPair from this half-sign-keyPair',
+	'\n'	+	'ed2curve.convertKeyPair(signKeypairFromBox64Key, true)',
+	'\n'	,	ed2curve.convertKeyPair(signKeypairFromBox64Key, true),
+				
+	'\n'	+	'(JSON.stringify(ed2curveKeyPair) === JSON.stringify(ed2curve.convertKeyPair(signKeypairFromBox64Key, true)))',
+				(JSON.stringify(ed2curveKeyPair) === JSON.stringify(ed2curve.convertKeyPair(signKeypairFromBox64Key, true)))
+);
+
+
+
+
+
+
+
+
+
+
+console.log('\n\n\n\n\n\n\n\n\n\n'	+	'https://github.com/dchest/ed2curve-js#example');
+
+// Generate new sign key pair.
+var myKeyPair = nacl.sign.keyPair();
+console.log('Generate new sign keyPair. myKeyPair: ', myKeyPair);
+
+// Share public key with a peer.
+console.log('Share public key with a peer. myKeyPair.publicKey: ', myKeyPair.publicKey);
+
+// Receive peer's public key.
+var theirKeyPair = nacl.sign.keyPair();
+console.log('They generated keyPair. theirKeyPair: ', theirKeyPair);
+var theirPublicKey = theirKeyPair.publicKey;	// ... receive
+console.log('Receve peer\'s public key. theirPublicKey: ', theirPublicKey);
+
+// Sign a message.
+//var message = nacl.util.decodeUTF8('My message to their!');
+var message = new TextEncoder().encode('My message to their!');
+console.log('Message to bytes. message: ', message);
+var signedMessage = nacl.sign(message, myKeyPair.secretKey);
+console.log('Sign the message. nacl.sign(message, myKeyPair.secretKey): ', signedMessage);
+
+// Send message to peer. They can now verify it using
+console.log('Send the signed message to their...');
+// the previously shared public key (myKeyPair.publicKey).
+console.log('Now, they can verify this, by using previous shared publicKey (myKeyPair.publicKey):');
+// ...
+var theyVerifyMessage = nacl.sign.open(signedMessage, myKeyPair.publicKey);
+console.log('They verify the signed message. nacl.sign.open(signedMessage, myKeyPair.publicKey): ', theyVerifyMessage);
+
+
+//Now, they sign their message by their secretKey:
+console.log('Now, they sign their message by their secretKey.');
+//var TheirResponse = nacl.util.decodeUTF8('Their Response to me!');
+var TheirResponse = new TextEncoder().encode('Their Response to me!');
+console.log('They get message bytes. TheirResponse: ', TheirResponse);
+var signedTheirResponse = nacl.sign(TheirResponse, theirKeyPair.secretKey);
+console.log('They sign their message. nacl.sign(TheirResponse, theirKeyPair.secretKey): ', signedTheirResponse);
+
+console.log('Now, they send their signed response.');
+
+// Receive a signed message from peer and verify it using their public key.
+var theirSignedMessage = signedTheirResponse;	// ... receive
+var theirMessage = nacl.sign.open(theirSignedMessage, theirPublicKey);
+if (theirMessage) {
+  // ... we got the message ...
+  console.log('Signature was been verified! theirMessage: ', theirMessage);
+}
+
+// Encrypt a message to their public key.
+// But first, we need to convert our secret key and their public key
+// from Ed25519 into the format accepted by Curve25519.
+//
+// Note that peers are not involved in this conversion -- all they need
+// to know is the signing public key that we already shared with them.
+
+var theirDHPublicKey = ed2curve.convertPublicKey(theirPublicKey);
+console.log('convert their DH Public Key. ed2curve.convertPublicKey(theirPublicKey):', theirDHPublicKey);
+var myDHSecretKey = ed2curve.convertSecretKey(myKeyPair.secretKey);
+console.log('convert my DH Secret Key. ed2curve.convertPublicKey(myDHSecretKey):', myDHSecretKey);
+
+//var anotherMessage = nacl.util.decodeUTF8('Keep silence');
+var anotherMessage = new TextEncoder().encode('My second message to their...');
+console.log('Get the bytes of another message. anotherMessage: ', anotherMessage);
+var nonce = window.crypto.getRandomValues(new Uint8Array(24));
+var encryptedMessage = nacl.box(anotherMessage, nonce, theirDHPublicKey, myDHSecretKey);
+console.log('encyrpt this. nacl.box(anotherMessage, nonce, theirDHPublicKey, myDHSecretKey)', encryptedMessage);
+
+console.log('Send encrypted message to them.');
+
+
+
+//They decrypt it:
+var myDHPublicKey = ed2curve.convertPublicKey(myKeyPair.publicKey);
+console.log('They convert my DH Public Key. ed2curve.convertPublicKey(myKeyPair.publicKey):', myDHPublicKey);
+var theirDHSecretKey = ed2curve.convertSecretKey(theirKeyPair.secretKey);
+console.log('They convert their DH Secret Key. ed2curve.convertSecretKey(theirKeyPair.secretKey):', theirDHSecretKey);
+var TheyDecryptTheMessage = nacl.box.open(encryptedMessage, nonce, myDHPublicKey, theirDHSecretKey);
+console.log('They decrypt my signed message. nacl.box.open(encryptedMessage, nonce, myDHPublicKey, theirDHSecretKey): ', TheyDecryptTheMessage);
+
+
+
+//They encrypt another:
+var theirMessageToEncrypt = new TextEncoder().encode('Their second response to me...');
+console.log('Get the bytes of another message. theirMessageToEncrypt: ', theirMessageToEncrypt);
+var nonce = window.crypto.getRandomValues(new Uint8Array(24));
+var theirEncryptedMessage = nacl.box(theirMessageToEncrypt, nonce, myDHPublicKey, theirDHSecretKey);
+console.log('they encrypt this message. nacl.box(theirMessageToEncrypt, nonce, myDHPublicKey, theirDHSecretKey):', theirEncryptedMessage);
+
+console.log('Now, they send this encrypted message to me.');
+
+// When we receive encrypted messages from peers,
+// we need to use converted keys to open them.
+
+var theirEncryptedMessage = theirEncryptedMessage;	// ... receive
+var decryptedMessage = nacl.box.open(theirEncryptedMessage, nonce, theirDHPublicKey, myDHSecretKey);
+console.log(
+	'Decrypt their message. nacl.box.open(theirEncryptedMessage, nonce, theirDHPublicKey, myDHSecretKey): ',
+	nacl.box.open(theirEncryptedMessage, nonce, theirDHPublicKey, myDHSecretKey)
+);
+console.log('decode their message from bytes: ', new TextDecoder().decode(decryptedMessage));
+
+
+</script>
