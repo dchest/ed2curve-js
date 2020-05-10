@@ -221,29 +221,50 @@
     return z;
   }
 
+	// Converts Curve25519 public key back to Ed25519 public key.
+	// edwardsY = (montgomeryX - 1) / (montgomeryX + 1)
+	function TryToConvertPublicKeyBack(pk) {
+		var z = new Uint8Array(32),
+			x = gf(), a = gf(), b = gf();
+
+		unpack25519(x, pk);
+
+		A(a, x, gf1);
+		Z(b, x, gf1);
+		inv25519(a, a);
+		M(a, a, b);
+
+		pack25519(z, a); //what about last byte of this value??? Sometimes pubKeys not equals... Maybe there is parity-bit lost.
+		return z;
+	}
+  
   // Converts Ed25519 secret key to Curve25519 secret key.
-  function convertSecretKey(sk) {
+  function convertSecretKey(sk, direct) {
     var d = new Uint8Array(64), o = new Uint8Array(32), i;
-    nacl.lowlevel.crypto_hash(d, sk, 32);
-    d[0] &= 248;
-    d[31] &= 127;
-    d[31] |= 64;
-    for (i = 0; i < 32; i++) o[i] = d[i];
+    if(direct){d = sk.slice(0, 32);}
+	else{
+		nacl.lowlevel.crypto_hash(d, sk, 32);
+		d[0] &= 248;
+		d[31] &= 127;
+		d[31] |= 64;
+    }
+	for (i = 0; i < 32; i++) o[i] = d[i];
     for (i = 0; i < 64; i++) d[i] = 0;
     return o;
   }
 
-  function convertKeyPair(edKeyPair) {
-    var publicKey = convertPublicKey(edKeyPair.publicKey);
+  function convertKeyPair(edKeyPair, direct) {
+    var publicKey = convertPublicKey(edKeyPair.publicKey, direct);
     if (!publicKey) return null;
     return {
       publicKey: publicKey,
-      secretKey: convertSecretKey(edKeyPair.secretKey)
+      secretKey: convertSecretKey(edKeyPair.secretKey, direct)
     };
   }
 
   return {
     convertPublicKey: convertPublicKey,
+    TryToConvertPublicKeyBack: TryToConvertPublicKeyBack,	//last byte sometimes is different, there is some bit lost.
     convertSecretKey: convertSecretKey,
     convertKeyPair: convertKeyPair,
   };
